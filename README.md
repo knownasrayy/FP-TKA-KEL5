@@ -23,3 +23,7 @@ Kami mendeploy sistem ini menggunakan ekosistem **Microsoft Azure** dengan spesi
 | **VM 2 (`tka-backend-1`)** | Python Flask Backend API (Gunicorn) | `Standard_B2als_v2` (2 vCPU, 4GB RAM) | $31.24 |
 | **VM 3 (`tka-database`)** | MongoDB Database Server | `Standard_B2als_v2` (2 vCPU, 4GB RAM) | $31.24 |
 | **TOTAL BIAYA** | | | **$70.29** |
+
+## Arsitektur Cloud
+
+![Arsitektur Cloud](Dokumentasi/Arsitektur_Cloud_FP_Kel_26.png)
