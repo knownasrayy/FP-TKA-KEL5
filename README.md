@@ -26,4 +26,4 @@ Kami mendeploy sistem ini menggunakan ekosistem **Microsoft Azure** dengan spesi
 
 ## Arsitektur Cloud
 
-![Arsitektur Cloud](Dokumentasi/Arsitektur Cloud FP Kel 5.png)
+![Arsitektur Cloud](Dokumentasi/Arsitektur_Cloud_FP_Kel_26.png)
