@@ -33,9 +33,11 @@ from pymongo import MongoClient, DESCENDING, ASCENDING
 # ═══════════════════════════════════════════
 # Config
 # ═══════════════════════════════════════════
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
-MONGO_URI   = os.environ.get("MONGO_URI",   "mongodb://localhost:27017/")
+MONGO_URI   = os.environ.get("MONGO_URI",   "mongodb://10.0.0.6:27017/")
 JWT_SECRET  = os.environ.get("JWT_SECRET",  "ganti-ini-di-production-dengan-string-acak-panjang")
 JWT_EXPIRES = int(os.environ.get("JWT_EXPIRES", 86400))
 
