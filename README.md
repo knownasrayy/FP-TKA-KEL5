@@ -145,7 +145,7 @@ Pengujian dilakukan dari laptop yang terhubung pada jaringan yang berbeda dari s
 | 1 — Maksimum RPS | 1 | 110 | 10.401 | 110 (1,06%) | 40.4 | 130 / 2.466 | Failure pertama muncul |
 | 2 — Peak Concurrency | 50 | 250 | 10.891 | 0 (0%) | 28.1 | 1.200 / 21.277 | 0% failure, tapi latensi sudah sangat tinggi |
 | 3 — Peak Concurrency | 100 | 300 | 8.477 | 3 (0,035%) | 33.9 | 3.200 / 74.991 | Failure minor mulai muncul |
-| 4 — Peak Concurrency | 200 | 200 | _lihat `scene 4_200.png`_ | _lihat grafik_ | _lihat grafik_ | _lihat grafik_ | Cold-start spike di awal, **perlu retest** |
+| 4 — Peak Concurrency | 200 | 200 | 9.946| 330 (1%) | 1.734,35 | 784,57 / 20.000 | Terjadi lonjakan eror dan latensi ekstrem. |
 | 5 — Peak Concurrency | ~~300~~ **500** | 300 (parameter salah) | 4.762 | 52 (1,1%) | 99 | 840 / 4.160 | **Perlu retest dengan spawn rate 500** |
 
 > **Rata-rata RPS tertinggi dengan failure 0% (Skenario 1): 34,8 RPS**, tercapai pada 100 concurrent user. Berdasarkan skala penilaian soal (200 RPS = 30 poin), ini setara kurang lebih (34,8/200) × 30 ≈ 5,2 poin — masih jauh dari optimal, sehingga sangat disarankan melakukan tuning (jumlah worker Gunicorn, index MongoDB pada `orders`, connection pool) sebelum laporan final disusun.
