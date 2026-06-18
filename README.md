@@ -35,5 +35,16 @@ Kami mendeploy sistem ini menggunakan ekosistem **Microsoft Azure** dengan spesi
 | Skenario 1| 1 |10, 20, 30, .., 110| Failure 1% muncul di 110 user| 100 user|Batas throughput murni server. Karena dinaikkan sangat halus (1 user/detik), server punya waktu untuk bersiap. Angka 100 user adalah titik kestabilan tertinggi di mana CPU/RAM dan database MongoDB bekerja di kapasitas optimalnya tanpa menghasilkan eror.|
 |Skenario 2| 50| 50, 100, 150, .., 300| Failure 1% muncul di 300 user|250 user|Server sanggup menerima gelombang user berskala 50 user sekaligus. Angka 250 user menunjukkan batas atas jumlah sesi aktif yang bisa dikelola aplikasi secara paralel sebelum antrean request mulai menumpuk.|
 |Skenario 3|100|100, 200, 300, 400| Failure 1% muncul di 400 user|300 user|Server bisa menampung hingga 300 user jika diberikan 100 user sekaligus. Namun begitu menyentuh 400 user, memori backend atau connection pool MongoDB habis, menyebabkan 1% request hang/gagal.|
-|Skenario 4| 200|200, 400| Warm-up spike tinggi di awal (kaget)|<200 user|Server mengalami Cold Start/Warm-up Spike. Masuknya 200 user dalam 1 detik membuat sistem kaget karena koneksi database belum siap. Meskipun akhirnya turun ke 1%, lonjakan eror di detik-detik awal membuat skenario ini dikategorikan tidak aman.|
-|Skenario 5| 300|300, 600| Warm-up spike tinggi di awal (kaget)|<300 user|Gempuran 300 user dalam waktu bersamaan langsung membuat server mengalami bottleneck instan di awal. Sistem tidak mampu melakukan scaling secepat kedatangan user.|
+|Skenario 4| 200|200 | Warm-up spike tinggi di awal (kaget)|<200 user|Server mengalami Cold Start/Warm-up Spike. Masuknya 200 user dalam 1 detik membuat sistem kaget karena koneksi database belum siap. Meskipun akhirnya turun ke 1%, lonjakan eror di detik-detik awal membuat skenario ini dikategorikan tidak aman.|
+|Skenario 5| 300|300 | Warm-up spike tinggi di awal (kaget)|<300 user|Gempuran 300 user dalam waktu bersamaan langsung membuat server mengalami bottleneck instan di awal. Sistem tidak mampu melakukan scaling secepat kedatangan user.|
+
+### Dokumentasi Locust Tester
+#### Skenario 1 -> Spawn Rate = 1; User = 10, 20, 30, .., 110 
+
+#### Skenario 2 -> Spawn Rate = 50; User = 50, 100, 150, .., 300
+
+#### Skenario 3 -> Spawn Rate = 100; User = 100, 200, 300, 400 
+
+#### Skenario 4 -> Spawn Rate = 200; User = 200
+
+#### Skenario 5 -> Spawn Rate = 300; User = 300 
