@@ -26,7 +26,7 @@ Kami mendeploy sistem ini menggunakan ekosistem **Microsoft Azure** dengan spesi
 
 ## Arsitektur Cloud
 
-![Arsitektur Cloud](Dokumentasi/Arsitektur%20Cloud%20FP%20Kel%205.png)
+![Arsitektur Cloud](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/Arsitektur%20Cloud%20FP%20Kel%205.png)
 
 ## Locust Tester
 
