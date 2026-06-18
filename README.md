@@ -125,7 +125,24 @@ Seluruh endpoint utama yang diuji mengembalikan response sesuai ekspektasi (2xx)
 
 ### Tampilan Frontend
 
-> *(Sertakan screenshot halaman utama, login, cart, dan order history dari frontend yang sudah berjalan di sini.)*
+Frontend dapat diakses langsung melalui IP Load Balancer (`http://20.198.72.134`) dan berhasil terhubung ke backend — terlihat dari nama produk dan harga yang identik dengan data MongoDB yang diuji lewat Postman (misal "Mouse Logitech MX Master 3S", "Docker Deep Dive - Nigel Poulton").
+
+**Halaman utama (katalog produk)**
+![Frontend Home](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_home.png)
+
+**Tambah produk ke keranjang**
+![Frontend Add to Cart](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_addtocart.png)
+
+**Shopping cart**
+![Frontend Cart](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_cart.png)
+
+**Order history**
+![Frontend Order History](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_orderhistory.png)
+
+> **Catatan perbaikan minor (belum diperbaiki):**
+> - Mata uang ditampilkan dengan simbol `$` padahal nilainya dalam Rupiah (misal `$1,350,000.00` seharusnya `Rp 1.350.000`).
+> - Nama produk pada kartu produk terpotong (misal "Mouse Logitech MX Ma" seharusnya "Mouse Logitech MX Master 3S").
+> - Kolom "Products" pada halaman Order History menampilkan label generik seperti "Item 6a2f ×2" alih-alih nama produk asli, karena frontend saat ini hanya menampilkan potongan `product_id` sebagai placeholder nama produk.
 
 ---
 
@@ -145,12 +162,14 @@ Pengujian dilakukan dari laptop yang terhubung pada jaringan yang berbeda dari s
 | 1 — Maksimum RPS | 1 | 110 | 10.401 | 110 (1,06%) | 40.4 | 130 / 2.466 | Failure pertama muncul |
 | 2 — Peak Concurrency | 50 | 250 | 10.891 | 0 (0%) | 28.1 | 1.200 / 21.277 | 0% failure, tapi latensi sudah sangat tinggi |
 | 3 — Peak Concurrency | 100 | 300 | 8.477 | 3 (0,035%) | 33.9 | 3.200 / 74.991 | Failure minor mulai muncul |
-| 4 — Peak Concurrency | 200 | 200 | 9.946| 330 (1%) | 1.734,35 | 784,57 / 20.000 | Terjadi lonjakan eror dan latensi ekstrem. |
+| 4 — Peak Concurrency | 200 | 200 | 9.946 | 330 (3,32%) | 60,2 | 1.200 / 20.000 | Failure muncul, cold-start spike di awal |
 | 5 — Peak Concurrency | ~~300~~ **500** | 300 (parameter salah) | 4.762 | 52 (1,1%) | 99 | 840 / 4.160 | **Perlu retest dengan spawn rate 500** |
 
 > **Rata-rata RPS tertinggi dengan failure 0% (Skenario 1): 34,8 RPS**, tercapai pada 100 concurrent user. Berdasarkan skala penilaian soal (200 RPS = 30 poin), ini setara kurang lebih (34,8/200) × 30 ≈ 5,2 poin — masih jauh dari optimal, sehingga sangat disarankan melakukan tuning (jumlah worker Gunicorn, index MongoDB pada `orders`, connection pool) sebelum laporan final disusun.
 
 > **Catatan tambahan dari data Statistics:** pada Skenario 2 dan 3, failure rate memang masih mendekati/sama dengan 0%, namun response time p99 sudah mencapai puluhan detik (21–75 detik). Ini mengindikasikan request tidak gagal, tapi mengalami *queueing* parah — gejala umum dari kurangnya jumlah worker backend atau koneksi MongoDB yang menjadi bottleneck. Hal ini layak dibahas di bagian Kesimpulan, karena "0% failure" tidak selalu berarti sistem benar-benar sehat pada beban tersebut.
+
+> **Catatan Skenario 4:** failure rate di 200 user sudah mencapai 3,32%, sehingga 200 user **bukan** angka kapasitas aman (failure 0%) untuk skenario ini — kapasitas aman sebenarnya ada di titik user yang lebih rendah, sebelum failure pertama muncul. Karena pengujian sebelumnya langsung dimulai dari 200 user (bukan dinaikkan bertahap dari level lebih rendah), titik failure 0% yang sebenarnya belum tertangkap dan perlu diuji ulang dengan kenaikan bertahap (misalnya 200 → 400 → 600 dst., sesuai pola Skenario 2 dan 3).
 
 ### Dokumentasi Resource Utilization
 
