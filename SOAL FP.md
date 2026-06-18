@@ -167,7 +167,9 @@ Jalankan Locust menggunakan file `Resources/Test/locustfile.py` dengan ketentuan
 
 - Locust **harus dijalankan dari komputer/host yang berbeda** dari server aplikasi.
 - Hapus isi database yang **di insert di setiap skenario** pengujian agar tidak terjadi akumulasi data. (tidak diperkenankan hapus isi database awal)
-- Lakukan pengujian dengan **5 skenario** berikut:| No | Skenario                           | Parameter                                                     | Durasi   |
+- Lakukan pengujian dengan **5 skenario** berikut:
+
+  | No | Skenario                           | Parameter                                                     | Durasi   |
   | -- | ---------------------------------- | ------------------------------------------------------------- | -------- |
   | 1  | Maksimum RPS (0% failure)          | Naikkan user secara bertahap                                  | 60 detik |
   | 2  | Peak Concurrency – Spawn Rate 50  | Tingkatkan user hingga failure muncul, catat nilai sebelumnya | 60 detik |
