@@ -40,11 +40,19 @@ Kami mendeploy sistem ini menggunakan ekosistem **Microsoft Azure** dengan spesi
 
 ### Dokumentasi Locust Tester
 #### Skenario 1 -> Spawn Rate = 1; User = 10, 20, 30, .., 110 
+![sc 1 user 100](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%201_100.png)
 
+![sc 1 user 110](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%201_110.png)
 #### Skenario 2 -> Spawn Rate = 50; User = 50, 100, 150, .., 300
+![sc 2 user 250](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%202_250.png)
 
+![sc 2 user 300](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%202_300.png)
 #### Skenario 3 -> Spawn Rate = 100; User = 100, 200, 300, 400 
+![sc 3 user 300](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%203_300.png)
 
+![sc 3 user 400](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%203_400.png)
 #### Skenario 4 -> Spawn Rate = 200; User = 200
+![sc 4 user 200](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%204_200.png)
 
 #### Skenario 5 -> Spawn Rate = 300; User = 300 
+![sc 5 user 300](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%205_300.png)
