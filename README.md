@@ -58,39 +58,74 @@ Backend mendapat alokasi RAM lebih besar (4GB) dibanding load balancer (1GB) kar
 
 ### 3.1 Backend (Flask + Gunicorn)
 
-Backend dijalankan dengan dua proses Gunicorn terpisah pada port yang berbeda (5001 dan 5002), masing-masing dengan 3 worker:
+Backend dijalankan di dua VM terpisah, masing-masing dengan satu proses Gunicorn:
 
+**VM 2 (tka-backend-1):**
 ```bash
-./venv/bin/gunicorn -w 3 -b 0.0.0.0:5001 app:app --daemon
-./venv/bin/gunicorn -w 3 -b 0.0.0.0:5002 app:app --daemon
+./venv/bin/gunicorn -w 3 --worker-class gthread --threads 4 -b 0.0.0.0:5001 --timeout 60 --keep-alive 5 --daemon app:app
 ```
 
-> *(Catatan untuk Anggota 3: lampirkan juga konfigurasi systemd service yang digunakan agar Gunicorn otomatis menyala saat VM restart, sesuai pembagian tugas tim.)*
+**VM 3 (tka-database):**
+```bash
+./venv/bin/gunicorn -w 2 --worker-class gthread --threads 4 -b 0.0.0.0:5001 app:app --daemon
+```
+
+Total: 5 worker Gunicorn yang menangani request secara paralel (3 di VM2, 2 di VM3).
 
 ### 3.2 Load Balancer (Nginx)
 
-Nginx dikonfigurasi sebagai reverse proxy yang meneruskan request dengan prefix `/api/` ke backend pool (round-robin antara dua proses Gunicorn), dan meneruskan request lainnya ke frontend:
+Nginx dikonfigurasi sebagai reverse proxy yang meneruskan request ke dua backend server secara round-robin:
 
 ```nginx
 upstream backend_servers {
-    server 98.70.0.131:5001;
-    server 98.70.0.131:5002;
+    server 98.70.0.131:5001;  # VM2 tka-backend-1
+    server 10.0.0.6:5001;     # VM3 tka-database
+    keepalive 32;
 }
 
 server {
     listen 80 default_server;
-    root /var/www/html;
+    listen [::]:80 default_server;
+    server_name _;
+
+    gzip on;
+    gzip_types text/plain application/json application/javascript text/css;
+    gzip_min_length 1000;
+
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_connect_timeout 10s;
+    proxy_send_timeout 30s;
+    proxy_read_timeout 30s;
 
     location /api/ {
         rewrite ^/api(/.*)$ $1 break;
         proxy_pass http://backend_servers;
+        proxy_set_header Connection "";
     }
+
+    location /order { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /orders { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /products { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /auth { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /health { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /admin { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /users { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
 
     location / {
         proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_cache_bypass $http_upgrade;
     }
 }
 ```
+
+Request dengan prefix `/api/` di-rewrite dan diteruskan ke backend pool. Request lainnya diteruskan ke frontend React yang berjalan di port 3000.
+
+---
 
 ### 3.3 Database (MongoDB)
 
