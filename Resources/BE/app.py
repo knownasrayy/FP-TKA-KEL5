@@ -41,7 +41,14 @@ MONGO_URI   = os.environ.get("MONGO_URI",   "mongodb://10.0.0.6:27017/")
 JWT_SECRET  = os.environ.get("JWT_SECRET",  "ganti-ini-di-production-dengan-string-acak-panjang")
 JWT_EXPIRES = int(os.environ.get("JWT_EXPIRES", 86400))
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(
+    MONGO_URI,
+    maxPoolSize=200,
+    minPoolSize=10,
+    connectTimeoutMS=5000,
+    socketTimeoutMS=10000,
+    serverSelectionTimeoutMS=5000
+)
 db     = client["orderdb"]
 
 users_col  = db["users"]
