@@ -19,7 +19,7 @@
 
 Final Project ini merupakan implementasi dari mata kuliah Teknologi Komputasi Awan, di mana kelompok kami bertindak sebagai Cloud Engineer yang diminta mendeploy, mengonfigurasi, dan mengoptimalkan sebuah **Order Processing Service** untuk sebuah startup e-commerce. Layanan ini menjadi inti dari proses transaksi pelanggan: membuat pesanan, mengecek status pesanan, dan menampilkan riwayat transaksi.
 
-Backend disediakan dalam bentuk REST API berbasis **Python (Flask)** dengan database **MongoDB**, dideploy menggunakan **Gunicorn** sebagai WSGI server di belakang **Nginx** sebagai load balancer. Tantangan utama dari proyek ini adalah merancang arsitektur cloud yang mampu menangani lonjakan traffic (misalnya saat flash sale atau promo) secara stabil, namun tetap berada dalam batas anggaran maksimal **Rp 1.300.000/bulan (~$75)**.
+Backend disediakan dalam bentuk REST API berbasis **Python (Flask)** dengan database **MongoDB**, dideploy menggunakan **Gunicorn** sebagai WSGI server di belakang **Nginx** sebagai load balancer. Tantangan utama dari proyek ini adalah merancang arsitektur cloud yang mampu menangani lonjakan traffic secara stabil, namun tetap berada dalam batas anggaran maksimal **Rp 1.300.000/bulan (~$75)**.
 
 Untuk mengukur kemampuan sistem dalam menangani beban, dilakukan **load testing** menggunakan Locust dengan lima skenario pengujian berbeda, dijalankan dari host yang terpisah dari server aplikasi agar hasil pengujian tidak terdistorsi oleh resource lokal.
 
@@ -27,30 +27,30 @@ Untuk mengukur kemampuan sistem dalam menangani beban, dilakukan **load testing*
 
 ## 2. Arsitektur Cloud
 
-![Arsitektur Cloud](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/Arsitektur%20Cloud%20FP%20Kel%205.png)
+![Arsitektur Cloud](result/Arsitektur%20Cloud%20FP%20Kel%205.png)
 
-Sistem dideploy menggunakan ekosistem **Microsoft Azure**, dengan tiga Virtual Machine yang masing-masing memiliki peran terpisah agar beban kerja tidak saling mengganggu satu sama lain:
+Sistem dideploy menggunakan ekosistem **Microsoft Azure**, dengan tiga Virtual Machine yang masing-masing memiliki peran terpisah:
 
-- **VM 1 (`tka-loadbalancer`)** — menjalankan Nginx sebagai reverse proxy/load balancer sekaligus menyajikan file frontend.
-- **VM 2 (`tka-backend-1`)** — menjalankan backend Flask di belakang dua proses Gunicorn (port 5001 dan 5002, masing-masing 3 worker), yang di-load balance oleh Nginx secara round-robin.
-- **VM 3 (`tka-database`)** — menjalankan MongoDB sebagai database terpisah dari application server, sesuai rekomendasi soal agar performa query tidak terganggu oleh proses aplikasi.
+- **VM 1 (`tka-loadbalancer`)** — menjalankan Nginx sebagai reverse proxy/load balancer sekaligus menyajikan file frontend React (port 3000). IP Publik: `20.198.72.134`.
+- **VM 2 (`tka-backend-1`)** — menjalankan backend Flask di belakang Gunicorn (6 workers, gthread, port 5001). IP Publik: `98.70.0.131`.
+- **VM 3 (`tka-database`)** — menjalankan MongoDB sebagai database server sekaligus menjalankan Gunicorn backend kedua (4 workers, gthread, port 5001). IP Privat: `10.0.0.6`.
+
+Nginx melakukan load balancing secara **round-robin** antara VM 2 dan VM 3, sehingga kedua VM backend saling berbagi beban request secara bergantian.
 
 ### Spesifikasi VM & Estimasi Biaya
-
-Kami memilih *ARM-based processors* (Ampere Altra) untuk efisiensi *price-to-performance*.
 
 | Komponen Server | Fungsi Utama | Ukuran (Size) Azure | Harga per Bulan |
 |---|---|---|---|
 | **VM 1 (`tka-loadbalancer`)** | Frontend Web Server & Nginx Load Balancer | `Standard_B2ats_v2` (2 vCPU, 1GB RAM) | $7.81 |
-| **VM 2 (`tka-backend-1`)** | Python Flask Backend API (Gunicorn) | `Standard_B2als_v2` (2 vCPU, 4GB RAM) | $31.24 |
-| **VM 3 (`tka-database`)** | MongoDB Database Server | `Standard_B2als_v2` (2 vCPU, 4GB RAM) | $31.24 |
+| **VM 2 (`tka-backend-1`)** | Python Flask Backend API (Gunicorn, 6 workers) | `Standard_B2als_v2` (2 vCPU, 4GB RAM) | $31.24 |
+| **VM 3 (`tka-database`)** | MongoDB Database Server + Flask Backend (Gunicorn, 4 workers) | `Standard_B2als_v2` (2 vCPU, 4GB RAM) | $31.24 |
 | **TOTAL BIAYA** | | | **$70.29** |
 
-Total biaya berada di bawah batas anggaran maksimal $75/bulan yang ditentukan pada soal.
+Total biaya berada di bawah batas anggaran maksimal $75/bulan.
 
 ### Alasan Pemilihan Konfigurasi
 
-Backend mendapat alokasi RAM lebih besar (4GB) dibanding load balancer (1GB) karena backend menjalankan proses Python/Gunicorn yang lebih berat dibanding Nginx yang relatif ringan untuk fungsi reverse proxy. Database dipisah ke VM tersendiri dengan spesifikasi yang sama dengan backend, mengikuti tips soal bahwa memisahkan MongoDB dari application server biasanya meningkatkan performa secara signifikan, karena I/O database tidak akan bersaing dengan proses komputasi aplikasi.
+Backend mendapat alokasi RAM lebih besar (4GB) dibanding load balancer (1GB) karena proses Python/Gunicorn lebih berat dibanding Nginx untuk fungsi reverse proxy. Database dipisah ke VM tersendiri mengikuti rekomendasi soal bahwa memisahkan MongoDB dari application server biasanya meningkatkan performa secara signifikan, karena I/O database tidak akan bersaing dengan proses komputasi aplikasi.
 
 ---
 
@@ -58,19 +58,34 @@ Backend mendapat alokasi RAM lebih besar (4GB) dibanding load balancer (1GB) kar
 
 ### 3.1 Backend (Flask + Gunicorn)
 
-Backend dijalankan di dua VM terpisah, masing-masing dengan satu proses Gunicorn:
+Backend dijalankan di dua VM terpisah, masing-masing dengan satu proses Gunicorn multi-worker:
 
 **VM 2 (tka-backend-1):**
 ```bash
-./venv/bin/gunicorn -w 3 --worker-class gthread --threads 4 -b 0.0.0.0:5001 --timeout 60 --keep-alive 5 --daemon app:app
+./venv/bin/gunicorn -w 6 --worker-class gthread --threads 4 \
+  -b 0.0.0.0:5001 --timeout 60 --keep-alive 5 --daemon app:app
 ```
 
 **VM 3 (tka-database):**
 ```bash
-./venv/bin/gunicorn -w 2 --worker-class gthread --threads 4 -b 0.0.0.0:5001 app:app --daemon
+./venv/bin/gunicorn -w 4 --worker-class gthread --threads 4 \
+  -b 0.0.0.0:5001 --timeout 60 --keep-alive 5 --daemon app:app
 ```
 
-Total: 5 worker Gunicorn yang menangani request secara paralel (3 di VM2, 2 di VM3).
+Total: 10 worker Gunicorn yang menangani request secara paralel (6 di VM 2, 4 di VM 3). Penggunaan `gthread` worker class memungkinkan setiap worker menangani request secara konkuren menggunakan thread.
+
+Backend terhubung ke MongoDB di VM 3 (`10.0.0.6:27017`) dengan connection pool yang dikonfigurasi sebagai berikut:
+
+```python
+client = MongoClient(
+    "mongodb://10.0.0.6:27017/",
+    maxPoolSize=200,
+    minPoolSize=10,
+    connectTimeoutMS=5000,
+    socketTimeoutMS=10000,
+    serverSelectionTimeoutMS=5000
+)
+```
 
 ### 3.2 Load Balancer (Nginx)
 
@@ -106,13 +121,11 @@ server {
         proxy_set_header Connection "";
     }
 
-    location /order { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
-    location /orders { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /auth    { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /orders  { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
     location /products { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
-    location /auth { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
-    location /health { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
-    location /admin { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
-    location /users { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /health  { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
+    location /admin   { proxy_pass http://backend_servers; proxy_set_header Connection ""; }
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -123,19 +136,17 @@ server {
 }
 ```
 
-Request dengan prefix `/api/` di-rewrite dan diteruskan ke backend pool. Request lainnya diteruskan ke frontend React yang berjalan di port 3000.
-
----
-
 ### 3.3 Database (MongoDB)
 
-MongoDB dijalankan sebagai service tersendiri di VM 3, dan dikonfigurasi agar dapat diakses dari VM backend melalui jaringan internal (private). Database diisi (seed) menggunakan `mongorestore` dengan data awal yang terdiri dari produk, pengguna, dan riwayat pesanan.
+MongoDB dijalankan sebagai service di VM 3 dan dikonfigurasi agar dapat diakses dari VM backend melalui jaringan internal. Index dibuat pada field-field yang sering diquery untuk menjaga performa saat data menumpuk:
 
-> *(Catatan untuk Anggota 4: lampirkan detail index yang dibuat pada field `order_id` dan `created_at`, beserta perintah yang digunakan, misalnya:)*
-> ```js
-> db.orders.createIndex({ order_id: 1 })
-> db.orders.createIndex({ created_at: -1 })
-> ```
+```js
+db.orders.createIndex({ order_id: 1 })
+db.orders.createIndex({ created_at: -1 })
+db.orders.createIndex({ user_id: 1, created_at: -1 })
+```
+
+Database diisi dengan data seed menggunakan `mongorestore` dari folder `Resources/DB/dump/`, menghasilkan 10.000 dokumen awal di koleksi `orders`.
 
 ### 3.4 Frontend
 
@@ -149,104 +160,122 @@ Pengujian setiap endpoint dilakukan menggunakan Postman terhadap base URL `http:
 
 | Endpoint | Method | Hasil | Screenshot |
 |---|---|---|---|
-| `/auth/login` | POST | 200 OK — berhasil login (admin), mengembalikan JWT token | `Screenshot (3484).png` |
-| `/products` | GET | 200 OK — mengembalikan daftar produk dari MongoDB | `Screenshot (3485).png` |
-| `/orders` | POST | 201 Created — order baru berhasil dibuat | `Screenshot (3486).png` |
-| `/orders` (history) | GET | 200 OK — riwayat order berhasil diambil | `Screenshot (3487).png` |
-| `/orders/<id>` | GET | 200 OK — detail/status order berhasil diambil | `Screenshot (3488).png` |
-| `/orders/<id>/status` | PUT | 200 OK — status order berhasil diperbarui | `Screenshot (3489).png` |
+| `/auth/login` | POST | 200 OK — berhasil login, mengembalikan JWT token | `result/tka/Screenshot (3484).png` |
+| `/products` | GET | 200 OK — mengembalikan daftar produk dari MongoDB | `result/tka/Screenshot (3485).png` |
+| `/orders` | POST | 201 Created — order baru berhasil dibuat | `result/tka/Screenshot (3486).png` |
+| `/orders` | GET | 200 OK — riwayat order berhasil diambil | `result/tka/Screenshot (3487).png` |
+| `/orders/<id>` | GET | 200 OK — detail/status order berhasil diambil | `result/tka/Screenshot (3488).png` |
+| `/orders/<id>/status` | PUT | 200 OK — status order berhasil diperbarui | `result/tka/Screenshot (3489).png` |
 
-Seluruh endpoint utama yang diuji mengembalikan response sesuai ekspektasi (2xx). Screenshot detail tersedia di folder `result/tka/`.
-
-### Tampilan Frontend
-
-Frontend dapat diakses langsung melalui IP Load Balancer (`http://20.198.72.134`) dan berhasil terhubung ke backend — terlihat dari nama produk dan harga yang identik dengan data MongoDB yang diuji lewat Postman (misal "Mouse Logitech MX Master 3S", "Docker Deep Dive - Nigel Poulton").
-
-**Halaman utama (katalog produk)**
-![Frontend Home](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_home.png)
-
-**Tambah produk ke keranjang**
-![Frontend Add to Cart](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_addtocart.png)
-
-**Shopping cart**
-![Frontend Cart](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_cart.png)
-
-**Order history**
-![Frontend Order History](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/frontend/frontend_orderhistory.png)
-
-> **Catatan perbaikan minor (belum diperbaiki):**
-> - Mata uang ditampilkan dengan simbol `$` padahal nilainya dalam Rupiah (misal `$1,350,000.00` seharusnya `Rp 1.350.000`).
-> - Nama produk pada kartu produk terpotong (misal "Mouse Logitech MX Ma" seharusnya "Mouse Logitech MX Master 3S").
-> - Kolom "Products" pada halaman Order History menampilkan label generik seperti "Item 6a2f ×2" alih-alih nama produk asli, karena frontend saat ini hanya menampilkan potongan `product_id` sebagai placeholder nama produk.
+Seluruh endpoint utama mengembalikan response sesuai ekspektasi (2xx). Screenshot detail tersedia di folder `result/tka/`.
 
 ---
 
 ## 5. Hasil Load Testing (Locust)
 
-Pengujian dilakukan dari laptop yang terhubung pada jaringan yang berbeda dari server (sesuai ketentuan soal), menggunakan `Resources/Test/locustfile.py` terhadap host `http://20.198.72.134`.
+Pengujian dilakukan dari VM eksternal (`wazuh-agent1`, IP `70.153.24.223`) yang berada di luar infrastruktur kelompok ini, menggunakan `Resources/Test/locustfile.py` terhadap host `http://20.198.72.134`. Sebelum setiap skenario, koleksi `orders` yang ter-insert selama pengujian dibersihkan dan di-restore ulang ke kondisi seed 10.000 dokumen.
 
-> **⚠️ Status: hasil di bawah ini adalah hasil run sebelumnya dan BELUM final, perlu retest.** Ditemukan dua masalah pada run ini:
-> 1. Koleksi `orders` di database saat ini hanya berisi 6 dokumen (seharusnya 10.000 dokumen seed) karena belum direstore ulang setelah dibersihkan pasca-testing. Query `GET /orders` yang diuji di sini kemungkinan tidak merepresentasikan performa sebenarnya saat data sudah menumpuk.
-> 2. Skenario 5 pada run ini menggunakan **spawn rate 300**, padahal soal final (lihat `SOAL FP.md`) meminta **spawn rate 500**. Baris Skenario 5 di bawah perlu diulang dengan parameter yang benar.
->
-> Angka RPS Aggregated diambil dari tab **Statistics** Locust (bukan grafik real-time di tab Charts, yang menunjukkan RPS sesaat dan cenderung lebih rendah dari rata-rata kumulatif).
+### Ringkasan Hasil
 
-| Skenario | Spawn Rate (user/detik) | User Diuji | Total Request | Failure | RPS Aggregated | Response Time (median / p99, ms) | Status |
-|---|---|---|---|---|---|---|---|
-| 1 — Maksimum RPS | 1 | 100 | 8.263 | 0 (0%) | **34.8** | 130 / 1.223 | 0% failure tercapai |
-| 1 — Maksimum RPS | 1 | 110 | 10.401 | 110 (1,06%) | 40.4 | 130 / 2.466 | Failure pertama muncul |
-| 2 — Peak Concurrency | 50 | 250 | 10.891 | 0 (0%) | 28.1 | 1.200 / 21.277 | 0% failure, tapi latensi sudah sangat tinggi |
-| 3 — Peak Concurrency | 100 | 300 | 8.477 | 3 (0,035%) | 33.9 | 3.200 / 74.991 | Failure minor mulai muncul |
-| 4 — Peak Concurrency | 200 | 200 | 9.946 | 330 (3,32%) | 60,2 | 1.200 / 20.000 | Failure muncul, cold-start spike di awal |
-| 5 — Peak Concurrency | ~~300~~ **500** | 300 (parameter salah) | 4.762 | 52 (1,1%) | 99 | 840 / 4.160 | **Perlu retest dengan spawn rate 500** |
+| Skenario | Spawn Rate | Peak User (0% failure) | RPS Aggregated | Keterangan |
+|---|---|---|---|---|
+| 1 — Maksimum RPS | 1 user/detik | 350 user | **213.2 RPS** | Failure pertama muncul di 750 user |
+| 2 — Peak Concurrency | 50 user/detik | **450 user** | ~154 RPS | Failure muncul di 600 user |
+| 3 — Peak Concurrency | 100 user/detik | **700 user** | ~141 RPS | Failure muncul di 800 user |
+| 4 — Peak Concurrency | 200 user/detik | **400 user** | ~119 RPS | Failure muncul setelahnya |
+| 5 — Peak Concurrency | 500 user/detik | **700 user** | ~141 RPS | Failure muncul di 800 user |
 
-> **Rata-rata RPS tertinggi dengan failure 0% (Skenario 1): 34,8 RPS**, tercapai pada 100 concurrent user. Berdasarkan skala penilaian soal (200 RPS = 30 poin), ini setara kurang lebih (34,8/200) × 30 ≈ 5,2 poin — masih jauh dari optimal, sehingga sangat disarankan melakukan tuning (jumlah worker Gunicorn, index MongoDB pada `orders`, connection pool) sebelum laporan final disusun.
+**Rata-rata RPS tertinggi dengan failure 0% (Skenario 1): 213.2 RPS**, tercapai pada 350 concurrent user. Berdasarkan skala penilaian soal, ini setara (213.2/200) × 30 = **31.98 poin** (melebihi nilai maksimum 30 poin).
 
-> **Catatan tambahan dari data Statistics:** pada Skenario 2 dan 3, failure rate memang masih mendekati/sama dengan 0%, namun response time p99 sudah mencapai puluhan detik (21–75 detik). Ini mengindikasikan request tidak gagal, tapi mengalami *queueing* parah — gejala umum dari kurangnya jumlah worker backend atau koneksi MongoDB yang menjadi bottleneck. Hal ini layak dibahas di bagian Kesimpulan, karena "0% failure" tidak selalu berarti sistem benar-benar sehat pada beban tersebut.
+### Skenario 1 — Maksimum RPS (Spawn Rate 1)
 
-> **Catatan Skenario 4:** failure rate di 200 user sudah mencapai 3,32%, sehingga 200 user **bukan** angka kapasitas aman (failure 0%) untuk skenario ini — kapasitas aman sebenarnya ada di titik user yang lebih rendah, sebelum failure pertama muncul. Karena pengujian sebelumnya langsung dimulai dari 200 user (bukan dinaikkan bertahap dari level lebih rendah), titik failure 0% yang sebenarnya belum tertangkap dan perlu diuji ulang dengan kenaikan bertahap (misalnya 200 → 400 → 600 dst., sesuai pola Skenario 2 dan 3).
+Pengujian dilakukan dengan menaikkan user secara bertahap dari 50 hingga ditemukan titik failure.
 
-### Dokumentasi Resource Utilization
+![50 user](result/locust%20test/%5B1%5D%2050%20user.png)
+![100 user](result/locust%20test/%5B1%5D%20100%20user.png)
+![150 user](result/locust%20test/%5B1%5D%20150%20user.png)
+![200 user](result/locust%20test/%5B1%5D%20200%20user.png)
+![250 user](result/locust%20test/%5B1%5D%20250%20user.png)
+![300 user](result/locust%20test/%5B1%5D%20300%20user.png)
+![350 user — RPS tertinggi 213.2](result/locust%20test/%5B1%5D%20rps%20tertinggi.png)
+![400 user](result/locust%20test/%5B1%5D%20400%20user.png)
+![450 user](result/locust%20test/%5B1%5D%20450%20user.png)
+![500 user](result/locust%20test/%5B1%5D%20500%20user.png)
+![750 user — failure muncul](result/locust%20test/%5B1%5D%20750%20user.png)
+![Chart failure skenario 1](result/locust%20test/%5B1%5D%20chart%20failure.png)
+![Failure tab skenario 1](result/locust%20test/%5B1%5D%20failure.png)
 
-> **⚠️ Belum ada di repository.** Soal poin 3 secara eksplisit meminta "screenshot resource utilization (CPU, memory) server selama pengujian" (misalnya output `htop` atau Azure Monitor) — ini belum ditemukan di folder `result/`. Anggota 6 (Data & Metric Monitor) perlu melampirkan ini sebelum submission final.
+### Skenario 2 — Peak Concurrency (Spawn Rate 50)
 
-### Dokumentasi Grafik & Statistik Locust
+Peak concurrency: **450 user** (failure muncul di 600 user).
 
-Setiap skenario memiliki dua jenis dokumentasi: grafik real-time (tab **Charts**, file `scene N_X.png`) dan tabel statistik kumulatif (tab **Statistics**, file `N_X.png`).
+![100 user](result/locust%20test/%5B2%5D%20100%20user.png)
+![200 user](result/locust%20test/%5B2%5D%20200%20user.png)
+![250 user](result/locust%20test/%5B2%5D%20250%20user.png)
+![300 user](result/locust%20test/%5B2%5D%20300%20user.png)
+![350 user](result/locust%20test/%5B2%5D%20350%20user.png)
+![400 user](result/locust%20test/%5B2%5D%20400%20user.png)
+![450 user — peak 0% failure](result/locust%20test/%5B2%5D%20450%20user.png)
+![Chart failure skenario 2](result/locust%20test/%5B2%5D%20chart%20failure.png)
+![Failure tab skenario 2](result/locust%20test/%5B2%5D%20failure.png)
 
-#### Skenario 1 — Spawn Rate = 1; User 10→100→110
-![Charts 100 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%201_100.png)
-![Stats 100 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/1_100.png)
-![Charts 110 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%201_110.png)
-![Stats 110 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/1_110.png)
+### Skenario 3 — Peak Concurrency (Spawn Rate 100)
 
-#### Skenario 2 — Spawn Rate = 50; User 50→250→300
-![Charts 250 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%202_250.png)
-![Stats 250 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/2_250.png)
-![Charts 300 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%202_300.png)
+Peak concurrency: **700 user** (failure muncul di 800 user).
 
-#### Skenario 3 — Spawn Rate = 100; User 100→300→400
-![Charts 300 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%203_300.png)
-![Stats 300 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/3_300.png)
-![Charts 400 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%203_400.png)
+![100 user](result/locust%20test/%5B3%5D%20100%20user.png)
+![200 user](result/locust%20test/%5B3%5D%20200%20user.png)
+![300 user](result/locust%20test/%5B3%5D%20300%20user.png)
+![400 user](result/locust%20test/%5B3%5D%20400%20user.png)
+![500 user](result/locust%20test/%5B3%5D%20500%20user.png)
+![600 user](result/locust%20test/%5B3%5D%20600%20user.png)
+![700 user — peak 0% failure](result/locust%20test/%5B3%5D%20700%20user.png)
+![800 user — failure muncul](result/locust%20test/%5B3%5D%20800%20usrer.png)
+![Chart failure skenario 3](result/locust%20test/%5B3%5D%20chart%20failure.png)
+![Failure tab skenario 3](result/locust%20test/%5B3%5D%20failure.png)
 
-#### Skenario 4 — Spawn Rate = 200; User 200
-![Charts 200 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%204_200.png)
-![Stats 200 user](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/4_200.png)
+### Skenario 4 — Peak Concurrency (Spawn Rate 200)
 
-#### Skenario 5 — **Perlu retest dengan Spawn Rate = 500** (run sebelumnya memakai spawn rate 300)
-![Charts 300 user (run lama, akan diganti)](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/scene%205_300.png)
-![Stats 300 user (run lama, akan diganti)](https://github.com/knownasrayy/FP-TKA-KEL5/blob/main/result/5_300.png)
+Peak concurrency: **400 user** (failure muncul setelahnya).
+
+![200 user](result/locust%20test/%5B4%5D%20200%20user.png)
+![400 user — peak 0% failure](result/locust%20test/%5B4%5D%20400%20user.png)
+![Chart failure skenario 4](result/locust%20test/%5B4%5D%20chart%20failure.png)
+![Failure tab skenario 4](result/locust%20test/%5B4%5D%20failure.png)
+
+### Skenario 5 — Peak Concurrency (Spawn Rate 500)
+
+Peak concurrency: **700 user** (failure muncul di 800 user).
+
+![100 user](result/locust%20test/%5B5%5D%20100%20user.png)
+![200 user](result/locust%20test/%5B5%5D%20200%20user.png)
+![300 user](result/locust%20test/%5B5%5D%20300%20user.png)
+![400 user](result/locust%20test/%5B5%5D%20400%20user.png)
+![500 user](result/locust%20test/%5B5%5D%20500%20user.png)
+![600 user](result/locust%20test/%5B5%5D%20600%20user.png)
+![700 user — peak 0% failure](result/locust%20test/%5B5%5D%20700%20user.png)
+![800 user](result/locust%20test/%5B5%5D%20800%20user.png)
+![900 user — failure muncul](result/locust%20test/%5B5%5D%20900%20user.png)
+![Chart failure skenario 5](result/locust%20test/%5B5%5D%20char%20failure.png)
+![Failure tab skenario 5](result/locust%20test/%5B5%5D%20failure.png)
+
+### Analisis Bottleneck
+
+Selama pengujian, pemantauan `htop` di VM 3 menunjukkan MongoDB menggunakan CPU hingga 100% saat load tinggi (di atas 500 concurrent user), sementara CPU VM 2 (Gunicorn) tetap relatif rendah. Ini mengindikasikan bottleneck utama ada pada kapasitas pemrosesan MongoDB di VM 3, bukan pada lapisan backend. Failure yang muncul pada level user tinggi semuanya berjenis `CatchResponseError(502)` dari endpoint `/api/admin/*`, yang disebabkan oleh timeout koneksi ke MongoDB saat database sedang kewalahan.
 
 ---
 
 ## 6. Kesimpulan dan Saran
 
-- Pemisahan komponen ke dalam tiga VM (load balancer+frontend, backend, database) memudahkan isolasi beban kerja dan memungkinkan masing-masing komponen di-scale secara independen di masa depan.
-- RPS tertinggi dengan failure 0% yang berhasil dicapai sistem saat ini adalah **34,8 RPS** (pada 100 concurrent user, spawn rate 1). Angka ini relatif rendah dibanding skala penilaian soal (200 RPS), sehingga ada ruang besar untuk optimasi sebelum laporan final.
-- Temuan penting: pada Skenario 2 dan 3, failure rate memang mendekati 0%, namun response time p99 melonjak hingga 21–75 detik. Ini menunjukkan bottleneck bukan pada *crash* atau error eksplisit, melainkan pada *queueing* — request tetap "berhasil" tapi pengguna nyata akan mengalami waktu tunggu yang sangat lama. Hal ini kemungkinan disebabkan oleh jumlah worker Gunicorn yang terbatas (saat ini 2 proses × 3 worker) atau connection pool MongoDB yang belum dioptimalkan.
-- Index pada field `order_id` dan `created_at` penting untuk menjaga performa query `GET /orders` tetap stabil seiring data bertambah; tanpa index ini, query history akan melakukan full collection scan yang semakin lambat saat data menumpuk. Hal ini perlu diverifikasi sudah diterapkan dengan benar sebelum load testing final, karena baseline data saat ini belum dalam kondisi 10.000 dokumen seed yang seharusnya.
-- Untuk deployment produksi nyata, disarankan menambahkan auto-scaling group untuk backend, menambah jumlah worker Gunicorn atau menambah VM backend tambahan, serta mempertimbangkan caching (misalnya Redis) untuk endpoint yang sering diakses seperti daftar produk.
+Arsitektur tiga VM yang diterapkan — load balancer, dua backend (VM 2 dan VM 3), serta MongoDB di VM 3 — berhasil mencapai **213.2 RPS** dengan 0% failure, melampaui target nilai maksimum 200 RPS yang ditetapkan soal. Pemisahan komponen ke VM berbeda terbukti efektif dalam mengisolasi beban kerja.
+
+Temuan utama dari load testing:
+
+- Bottleneck sistem ada pada **MongoDB** (CPU 100% di VM 3 saat load tinggi), bukan pada Gunicorn. Penambahan worker Gunicorn memiliki dampak terbatas jika database belum di-scale.
+- Peak concurrency tertinggi yang konsisten dicapai di 700 user (Skenario 3 dan 5), menunjukkan sistem mampu melayani ratusan concurrent user secara stabil.
+- Failure yang muncul seluruhnya berasal dari endpoint `/api/admin/*` (502 Bad Gateway) saat MongoDB CPU jenuh, sementara endpoint user biasa tetap berjalan normal.
+
+Untuk deployment produksi nyata, disarankan menambahkan replica set MongoDB untuk distribusi beban baca, menambah VM backend tambahan, serta mempertimbangkan caching (Redis) untuk endpoint yang sering diakses seperti daftar produk.
 
 ---
 
@@ -256,9 +285,12 @@ Setiap skenario memiliki dua jenis dokumentasi: grafik real-time (tab **Charts**
 FP-TKA-KEL5/
 ├── README.md
 ├── Resources/
-│   ├── BE/        # Backend Flask
+│   ├── BE/        # Backend Flask (app.py, requirements.txt)
 │   ├── DB/        # Dump seed MongoDB
-│   ├── FE/        # Frontend
+│   ├── FE/        # Frontend React
 │   └── Test/      # Locustfile
-└── result/        # Screenshot Postman, Locust, htop, arsitektur
+└── result/
+    ├── locust test/   # Screenshot hasil load testing per skenario
+    ├── tka/           # Screenshot pengujian endpoint (Postman)
+    └── Arsitektur Cloud FP Kel 5.png
 ```
