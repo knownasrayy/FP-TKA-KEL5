@@ -77,8 +77,10 @@ Total: 10 worker Gunicorn yang menangani request secara paralel (6 di VM 2, 4 di
 Backend terhubung ke MongoDB di VM 3 (`10.0.0.6:27017`) dengan connection pool yang dikonfigurasi sebagai berikut:
 
 ```python
+MONGO_URI   = os.environ.get("MONGO_URI",   "mongodb://10.0.0.6:27017/")
+
 client = MongoClient(
-    "mongodb://10.0.0.6:27017/",
+    MONGO_URI,
     maxPoolSize=200,
     minPoolSize=10,
     connectTimeoutMS=5000,
@@ -143,7 +145,7 @@ MongoDB dijalankan sebagai service di VM 3 dan dikonfigurasi agar dapat diakses 
 ```js
 db.orders.createIndex({ order_id: 1 })
 db.orders.createIndex({ created_at: -1 })
-db.orders.createIndex({ user_id: 1, created_at: -1 })
+db.orders.createIndex({ user_id: 1 })
 ```
 
 Database diisi dengan data seed menggunakan `mongorestore` dari folder `Resources/DB/dump/`, menghasilkan 10.000 dokumen awal di koleksi `orders`.
