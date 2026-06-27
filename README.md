@@ -201,10 +201,12 @@ Pengujian dilakukan dari VM eksternal (`wazuh-agent1`, IP `70.153.24.223`) yang 
 | 1 — Maksimum RPS | 1 user/detik | 350 user | **213.2 RPS** | Failure pertama muncul di 750 user |
 | 2 — Peak Concurrency | 50 user/detik | **450 user** | ~154 RPS | Failure muncul di 600 user |
 | 3 — Peak Concurrency | 100 user/detik | **700 user** | ~141 RPS | Failure muncul di 800 user |
-| 4 — Peak Concurrency | 200 user/detik | **400 user** | ~119 RPS | Failure muncul setelahnya |
+| 4 — Peak Concurrency | 200 user/detik | 400 user | ~119 RPS | Failure muncul di 600 user (13% failure rate) |
 | 5 — Peak Concurrency | 500 user/detik | **700 user** | ~141 RPS | Failure muncul di 800 user |
 
 **Rata-rata RPS tertinggi dengan failure 0% (Skenario 1): 213.2 RPS**, tercapai pada 350 concurrent user. Berdasarkan skala penilaian soal, ini setara (213.2/200) × 30 = **31.98 poin** (melebihi nilai maksimum 30 poin).
+
+Pada Skenario 1, RPS tidak terus naik secara linear meski concurrent user terus ditambah hingga 500. RPS stabil pada kisaran 100-220 sejak 350 user, sementara response time justru terus memburuk (95th percentile naik dari 780ms di 350 user menjadi 7.200ms di 500 user, dan 22.000ms di 800 user). Ini mengindikasikan sistem sudah mencapai titik saturasi throughput sejak 350 user, penambahan user setelah titik ini hanya menambah panjang antrian request, bukan menambah jumlah request yang berhasil diproses per detik.
 
 ### Skenario 1 — Maksimum RPS (Spawn Rate 1)
 
@@ -378,6 +380,8 @@ Peak concurrency: **700 user** (failure muncul di 800 user).
 ### Analisis Bottleneck
 
 Selama pengujian, pemantauan `htop` menunjukkan MongoDB di VM 3 menggunakan CPU hingga 100% saat load tinggi (di atas 500 concurrent user), sementara Gunicorn di VM 2 tetap relatif rendah. Ini mengindikasikan bottleneck utama ada pada kapasitas pemrosesan MongoDB, bukan pada lapisan backend. Failure yang muncul semuanya berjenis `CatchResponseError(502)` dari endpoint `/api/admin/*`, disebabkan oleh timeout koneksi ke MongoDB saat database sedang kewalahan.
+
+Pola kegagalan pada Skenario 2 juga menunjukkan karakteristik *cascading failure* sesaat — pada titik transisi ke 600 user, failure rate sempat melonjak tajam hingga sama dengan RPS (201,5 request/detik gagal dari 201,5 total request/detik), menandakan hampir seluruh request endpoint admin gagal serentak begitu MongoDB mencapai batas kapasitasnya. Setelah lonjakan awal ini, sistem kembali stabil dengan failure rate yang jauh lebih rendah, mengindikasikan bahwa sebagian request berhasil melewati periode beban puncak setelah beberapa koneksi yang gagal dilepas dari connection pool.
 
 ---
 
