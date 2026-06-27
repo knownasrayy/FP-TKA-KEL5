@@ -201,7 +201,7 @@ Pengujian dilakukan dari VM eksternal (`wazuh-agent1`, IP `70.153.24.223`) yang 
 | 1 — Maksimum RPS | 1 user/detik | 350 user | **213.2 RPS** | Failure pertama muncul di 750 user |
 | 2 — Peak Concurrency | 50 user/detik | **450 user** | ~154 RPS | Failure muncul di 600 user |
 | 3 — Peak Concurrency | 100 user/detik | **700 user** | ~141 RPS | Failure muncul di 800 user |
-| 4 — Peak Concurrency | 200 user/detik | 400 user | ~119 RPS | Failure muncul di 600 user (13% failure rate) |
+| 4 — Peak Concurrency | 200 user/detik | 400 user | ~119 RPS | Failure muncul di 600 user |
 | 5 — Peak Concurrency | 500 user/detik | **700 user** | ~141 RPS | Failure muncul di 800 user |
 
 **Rata-rata RPS tertinggi dengan failure 0% (Skenario 1): 213.2 RPS**, tercapai pada 350 concurrent user. Berdasarkan skala penilaian soal, ini setara (213.2/200) × 30 = **31.98 poin** (melebihi nilai maksimum 30 poin).
