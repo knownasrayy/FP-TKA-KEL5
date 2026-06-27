@@ -155,6 +155,26 @@ Database diisi dengan data seed menggunakan `mongorestore` dari folder `Resource
 
 Frontend dibangun menggunakan React (TanStack Start) yang melakukan request ke backend melalui Nginx. Frontend menyajikan halaman katalog produk, keranjang belanja, riwayat pesanan, autentikasi (login), dan dashboard admin.
 
+Berikut adalah tampilan halaman-halaman utama frontend Smart Shop yang dapat diakses melalui `http://20.198.72.134`:
+
+![Homepage Smart Shop — landing page dengan banner promo, navigasi kategori, dan produk unggulan](result/tka/ss_homepage.png)
+*Gambar 2. Homepage Smart Shop — menampilkan banner promosi, navigasi kategori (Clothing, Accessories, Phone, dll.), dan produk pilihan.*
+
+![Halaman Login Smart Shop — form autentikasi dengan email dan password](result/tka/ss_login.png)
+*Gambar 3. Halaman Login — form sign-in dengan dukungan Google dan Apple, serta opsi registrasi akun baru.*
+
+![Halaman Produk — daftar produk dengan notifikasi "Added to cart"](result/tka/ss_products.png)
+*Gambar 4. Halaman Produk — katalog produk dengan fitur add to cart, rating, harga coret, dan notifikasi toast saat produk berhasil ditambahkan ke keranjang.*
+
+![Shopping Cart — ringkasan belanja dengan order summary dan tombol checkout](result/tka/ss_cart.png)
+*Gambar 5. Halaman Shopping Cart — tampilan keranjang belanja dengan order summary (subtotal, shipping, total) dan tombol Checkout.*
+
+![Admin Dashboard — overview statistik real-time dari MongoDB backend](result/tka/ss_admin.png)
+*Gambar 6. Admin Dashboard — menampilkan statistik real-time: total revenue, total orders (10.001), registered users (550), dan active products (92) yang diambil langsung dari MongoDB.*
+
+![Order History — riwayat pesanan dengan status dan filter per order ID](result/tka/ss_orders.png)
+*Gambar 7. Halaman Order History — daftar seluruh pesanan dengan kolom Order ID, Date, Products, Total, dan Status (Completed/Processing), dilengkapi fitur pencarian dan filter.*
+
 ---
 
 ## 4. Hasil Pengujian Endpoint
@@ -171,22 +191,22 @@ Pengujian setiap endpoint dilakukan menggunakan Postman terhadap base URL `http:
 | `/orders/<id>/status` | PUT | 200 OK — status order berhasil diperbarui |
 
 ![POST /auth/login — login berhasil, response berisi JWT token](result/tka/Screenshot%20(3484).png)
-*Gambar 2. POST /auth/login — login berhasil, response berisi JWT token.*
+*Gambar 8. POST /auth/login — login berhasil, response berisi JWT token.*
 
 ![GET /products — daftar produk berhasil diambil dari MongoDB](result/tka/Screenshot%20(3485).png)
-*Gambar 3. GET /products — daftar produk berhasil diambil dari MongoDB.*
+*Gambar 9. GET /products — daftar produk berhasil diambil dari MongoDB.*
 
 ![POST /orders — order baru berhasil dibuat dengan status pending](result/tka/Screenshot%20(3486).png)
-*Gambar 4. POST /orders — order baru berhasil dibuat dengan status pending.*
+*Gambar 10. POST /orders — order baru berhasil dibuat dengan status pending.*
 
 ![GET /orders — riwayat order berhasil diambil](result/tka/Screenshot%20(3487).png)
-*Gambar 5. GET /orders — riwayat seluruh order berhasil diambil.*
+*Gambar 11. GET /orders — riwayat seluruh order berhasil diambil.*
 
 ![GET /orders/<id> — detail order berhasil diambil berdasarkan ID](result/tka/Screenshot%20(3488).png)
-*Gambar 6. GET /orders/<id> — detail dan status order berhasil diambil.*
+*Gambar 12. GET /orders/<id> — detail dan status order berhasil diambil.*
 
 ![PUT /orders/<id>/status — status order berhasil diperbarui](result/tka/Screenshot%20(3489).png)
-*Gambar 7. PUT /orders/<id>/status — status order berhasil diperbarui oleh admin.*
+*Gambar 13. PUT /orders/<id>/status — status order berhasil diperbarui oleh admin.*
 
 ---
 
@@ -213,169 +233,169 @@ Pada Skenario 1, RPS tidak terus naik secara linear meski concurrent user terus 
 Pengujian dilakukan dengan menaikkan user secara bertahap dari 50 hingga ditemukan titik failure.
 
 ![Skenario 1 — 50 user, RPS mulai naik, 0% failure](result/locust%20test/%5B1%5D%2050%20user.png)
-*Gambar 8. Skenario 1 — 50 user, sistem mulai menerima request, 0% failure.*
+*Gambar 14. Skenario 1 — 50 user, sistem mulai menerima request, 0% failure.*
 
 ![Skenario 1 — 100 user, RPS stabil, 0% failure](result/locust%20test/%5B1%5D%20100%20user.png)
-*Gambar 9. Skenario 1 — 100 user, RPS stabil, 0% failure.*
+*Gambar 15. Skenario 1 — 100 user, RPS stabil, 0% failure.*
 
 ![Skenario 1 — 150 user, RPS terus naik, 0% failure](result/locust%20test/%5B1%5D%20150%20user.png)
-*Gambar 10. Skenario 1 — 150 user, RPS terus naik, 0% failure.*
+*Gambar 16. Skenario 1 — 150 user, RPS terus naik, 0% failure.*
 
 ![Skenario 1 — 200 user, 0% failure](result/locust%20test/%5B1%5D%20200%20user.png)
-*Gambar 11. Skenario 1 — 200 user, 0% failure.*
+*Gambar 17. Skenario 1 — 200 user, 0% failure.*
 
 ![Skenario 1 — 250 user, 0% failure](result/locust%20test/%5B1%5D%20250%20user.png)
-*Gambar 12. Skenario 1 — 250 user, 0% failure.*
+*Gambar 18. Skenario 1 — 250 user, 0% failure.*
 
 ![Skenario 1 — 300 user, 0% failure](result/locust%20test/%5B1%5D%20300%20user.png)
-*Gambar 13. Skenario 1 — 300 user, 0% failure.*
+*Gambar 19. Skenario 1 — 300 user, 0% failure.*
 
 ![Skenario 1 — 350 user, RPS tertinggi 213.2, 0% failure](result/locust%20test/%5B1%5D%20rps%20tertinggi.png)
-*Gambar 14. Skenario 1 — 350 user, RPS tertinggi tercapai: 213.2 RPS, 0% failure.*
+*Gambar 20. Skenario 1 — 350 user, RPS tertinggi tercapai: 213.2 RPS, 0% failure.*
 
 ![Skenario 1 — 400 user, 0% failure](result/locust%20test/%5B1%5D%20400%20user.png)
-*Gambar 15. Skenario 1 — 400 user, 0% failure.*
+*Gambar 21. Skenario 1 — 400 user, 0% failure.*
 
 ![Skenario 1 — 450 user, 0% failure](result/locust%20test/%5B1%5D%20450%20user.png)
-*Gambar 16. Skenario 1 — 450 user, 0% failure.*
+*Gambar 22. Skenario 1 — 450 user, 0% failure.*
 
 ![Skenario 1 — 500 user, 0% failure](result/locust%20test/%5B1%5D%20500%20user.png)
-*Gambar 17. Skenario 1 — 500 user, 0% failure.*
+*Gambar 23. Skenario 1 — 500 user, 0% failure.*
 
 ![Skenario 1 — 750 user, failure mulai muncul](result/locust%20test/%5B1%5D%20750%20user.png)
-*Gambar 18. Skenario 1 — 750 user, failure pertama muncul.*
+*Gambar 24. Skenario 1 — 750 user, failure pertama muncul.*
 
 ![Skenario 1 — grafik RPS dan failure rate saat failure muncul](result/locust%20test/%5B1%5D%20chart%20failure.png)
-*Gambar 19. Skenario 1 — grafik RPS dan failure rate menunjukkan titik failure.*
+*Gambar 25. Skenario 1 — grafik RPS dan failure rate menunjukkan titik failure.*
 
 ![Skenario 1 — detail failure per endpoint](result/locust%20test/%5B1%5D%20failure.png)
-*Gambar 20. Skenario 1 — detail failure, seluruhnya dari endpoint /api/admin/* dengan error 502.*
+*Gambar 26. Skenario 1 — detail failure, seluruhnya dari endpoint /api/admin/* dengan error 502.*
 
 ### Skenario 2 — Peak Concurrency (Spawn Rate 50)
 
 Peak concurrency: **450 user** (failure muncul di 600 user).
 
 ![Skenario 2 — 100 user, spawn rate 50, 0% failure](result/locust%20test/%5B2%5D%20100%20user.png)
-*Gambar 21. Skenario 2 — 100 user, spawn rate 50, 0% failure.*
+*Gambar 27. Skenario 2 — 100 user, spawn rate 50, 0% failure.*
 
 ![Skenario 2 — 200 user, 0% failure](result/locust%20test/%5B2%5D%20200%20user.png)
-*Gambar 22. Skenario 2 — 200 user, 0% failure.*
+*Gambar 28. Skenario 2 — 200 user, 0% failure.*
 
 ![Skenario 2 — 250 user, 0% failure](result/locust%20test/%5B2%5D%20250%20user.png)
-*Gambar 23. Skenario 2 — 250 user, 0% failure.*
+*Gambar 29. Skenario 2 — 250 user, 0% failure.*
 
 ![Skenario 2 — 300 user, 0% failure](result/locust%20test/%5B2%5D%20300%20user.png)
-*Gambar 24. Skenario 2 — 300 user, 0% failure.*
+*Gambar 30. Skenario 2 — 300 user, 0% failure.*
 
 ![Skenario 2 — 350 user, 0% failure](result/locust%20test/%5B2%5D%20350%20user.png)
-*Gambar 25. Skenario 2 — 350 user, 0% failure.*
+*Gambar 31. Skenario 2 — 350 user, 0% failure.*
 
 ![Skenario 2 — 400 user, 0% failure](result/locust%20test/%5B2%5D%20400%20user.png)
-*Gambar 26. Skenario 2 — 400 user, 0% failure.*
+*Gambar 32. Skenario 2 — 400 user, 0% failure.*
 
 ![Skenario 2 — 450 user, peak concurrency 0% failure](result/locust%20test/%5B2%5D%20450%20user.png)
-*Gambar 27. Skenario 2 — 450 user, peak concurrency dengan 0% failure.*
+*Gambar 33. Skenario 2 — 450 user, peak concurrency dengan 0% failure.*
 
 ![Skenario 2 — grafik RPS dan failure rate saat failure muncul di 600 user](result/locust%20test/%5B2%5D%20chart%20failure.png)
-*Gambar 28. Skenario 2 — grafik failure muncul di 600 user.*
+*Gambar 34. Skenario 2 — grafik failure muncul di 600 user.*
 
 ![Skenario 2 — detail failure per endpoint](result/locust%20test/%5B2%5D%20failure.png)
-*Gambar 29. Skenario 2 — detail failure, error 502 dari endpoint /api/admin/*.*
+*Gambar 35. Skenario 2 — detail failure, error 502 dari endpoint /api/admin/*.*
 
 ### Skenario 3 — Peak Concurrency (Spawn Rate 100)
 
 Peak concurrency: **700 user** (failure muncul di 800 user).
 
 ![Skenario 3 — 100 user, spawn rate 100, 0% failure](result/locust%20test/%5B3%5D%20100%20user.png)
-*Gambar 30. Skenario 3 — 100 user, spawn rate 100, 0% failure.*
+*Gambar 36. Skenario 3 — 100 user, spawn rate 100, 0% failure.*
 
 ![Skenario 3 — 200 user, 0% failure](result/locust%20test/%5B3%5D%20200%20user.png)
-*Gambar 31. Skenario 3 — 200 user, 0% failure.*
+*Gambar 37. Skenario 3 — 200 user, 0% failure.*
 
 ![Skenario 3 — 300 user, 0% failure](result/locust%20test/%5B3%5D%20300%20user.png)
-*Gambar 32. Skenario 3 — 300 user, 0% failure.*
+*Gambar 38. Skenario 3 — 300 user, 0% failure.*
 
 ![Skenario 3 — 400 user, 0% failure](result/locust%20test/%5B3%5D%20400%20user.png)
-*Gambar 33. Skenario 3 — 400 user, 0% failure.*
+*Gambar 39. Skenario 3 — 400 user, 0% failure.*
 
 ![Skenario 3 — 500 user, 0% failure](result/locust%20test/%5B3%5D%20500%20user.png)
-*Gambar 34. Skenario 3 — 500 user, 0% failure.*
+*Gambar 40. Skenario 3 — 500 user, 0% failure.*
 
 ![Skenario 3 — 600 user, 0% failure](result/locust%20test/%5B3%5D%20600%20user.png)
-*Gambar 35. Skenario 3 — 600 user, 0% failure.*
+*Gambar 41. Skenario 3 — 600 user, 0% failure.*
 
 ![Skenario 3 — 700 user, peak concurrency 0% failure](result/locust%20test/%5B3%5D%20700%20user.png)
-*Gambar 36. Skenario 3 — 700 user, peak concurrency dengan 0% failure.*
+*Gambar 42. Skenario 3 — 700 user, peak concurrency dengan 0% failure.*
 
 ![Skenario 3 — 800 user, failure mulai muncul](result/locust%20test/%5B3%5D%20800%20usrer.png)
-*Gambar 37. Skenario 3 — 800 user, failure mulai muncul.*
+*Gambar 43. Skenario 3 — 800 user, failure mulai muncul.*
 
 ![Skenario 3 — grafik RPS dan failure rate](result/locust%20test/%5B3%5D%20chart%20failure.png)
-*Gambar 38. Skenario 3 — grafik menunjukkan titik failure di 800 user.*
+*Gambar 44. Skenario 3 — grafik menunjukkan titik failure di 800 user.*
 
 ![Skenario 3 — detail failure per endpoint](result/locust%20test/%5B3%5D%20failure.png)
-*Gambar 39. Skenario 3 — detail failure dari endpoint /api/admin/*.*
+*Gambar 45. Skenario 3 — detail failure dari endpoint /api/admin/*.*
 
 ### Skenario 4 — Peak Concurrency (Spawn Rate 200)
 
 Peak concurrency: **400 user** (failure muncul setelahnya).
 
 ![Skenario 4 — 200 user, spawn rate 200, 0% failure](result/locust%20test/%5B4%5D%20200%20user.png)
-*Gambar 40. Skenario 4 — 200 user, spawn rate 200, 0% failure.*
+*Gambar 46. Skenario 4 — 200 user, spawn rate 200, 0% failure.*
 
 ![Skenario 4 — 400 user, peak concurrency 0% failure](result/locust%20test/%5B4%5D%20400%20user.png)
-*Gambar 41. Skenario 4 — 400 user, peak concurrency dengan 0% failure.*
+*Gambar 47. Skenario 4 — 400 user, peak concurrency dengan 0% failure.*
 
 ![Skenario 4 — grafik RPS dan failure rate saat failure muncul](result/locust%20test/%5B4%5D%20chart%20failure.png)
-*Gambar 42. Skenario 4 — grafik menunjukkan titik failure setelah 400 user.*
+*Gambar 48. Skenario 4 — grafik menunjukkan titik failure setelah 400 user.*
 
 ![Skenario 4 — detail failure per endpoint](result/locust%20test/%5B4%5D%20failure.png)
-*Gambar 43. Skenario 4 — detail failure, error 502 dari endpoint /api/admin/*.*
+*Gambar 49. Skenario 4 — detail failure, error 502 dari endpoint /api/admin/*.*
 
 ### Skenario 5 — Peak Concurrency (Spawn Rate 500)
 
 Peak concurrency: **700 user** (failure muncul di 800 user).
 
 ![Skenario 5 — 100 user, spawn rate 500, 0% failure](result/locust%20test/%5B5%5D%20100%20user.png)
-*Gambar 44. Skenario 5 — 100 user, spawn rate 500, 0% failure.*
+*Gambar 50. Skenario 5 — 100 user, spawn rate 500, 0% failure.*
 
 ![Skenario 5 — 200 user, 0% failure](result/locust%20test/%5B5%5D%20200%20user.png)
-*Gambar 45. Skenario 5 — 200 user, 0% failure.*
+*Gambar 51. Skenario 5 — 200 user, 0% failure.*
 
 ![Skenario 5 — 300 user, 0% failure](result/locust%20test/%5B5%5D%20300%20user.png)
-*Gambar 46. Skenario 5 — 300 user, 0% failure.*
+*Gambar 52. Skenario 5 — 300 user, 0% failure.*
 
 ![Skenario 5 — 400 user, 0% failure](result/locust%20test/%5B5%5D%20400%20user.png)
-*Gambar 47. Skenario 5 — 400 user, 0% failure.*
+*Gambar 53. Skenario 5 — 400 user, 0% failure.*
 
 ![Skenario 5 — 500 user, 0% failure](result/locust%20test/%5B5%5D%20500%20user.png)
-*Gambar 48. Skenario 5 — 500 user, 0% failure.*
+*Gambar 54. Skenario 5 — 500 user, 0% failure.*
 
 ![Skenario 5 — 600 user, 0% failure](result/locust%20test/%5B5%5D%20600%20user.png)
-*Gambar 49. Skenario 5 — 600 user, 0% failure.*
+*Gambar 55. Skenario 5 — 600 user, 0% failure.*
 
 ![Skenario 5 — 700 user, peak concurrency 0% failure](result/locust%20test/%5B5%5D%20700%20user.png)
-*Gambar 50. Skenario 5 — 700 user, peak concurrency dengan 0% failure.*
+*Gambar 56. Skenario 5 — 700 user, peak concurrency dengan 0% failure.*
 
 ![Skenario 5 — 800 user, failure mulai muncul](result/locust%20test/%5B5%5D%20800%20user.png)
-*Gambar 51. Skenario 5 — 800 user, failure mulai muncul.*
+*Gambar 57. Skenario 5 — 800 user, failure mulai muncul.*
 
 ![Skenario 5 — 900 user, failure rate meningkat](result/locust%20test/%5B5%5D%20900%20user.png)
-*Gambar 52. Skenario 5 — 900 user, failure rate meningkat signifikan.*
+*Gambar 58. Skenario 5 — 900 user, failure rate meningkat signifikan.*
 
 ![Skenario 5 — grafik RPS dan failure rate](result/locust%20test/%5B5%5D%20char%20failure.png)
-*Gambar 53. Skenario 5 — grafik menunjukkan titik failure di 800 user.*
+*Gambar 59. Skenario 5 — grafik menunjukkan titik failure di 800 user.*
 
 ![Skenario 5 — detail failure per endpoint](result/locust%20test/%5B5%5D%20failure.png)
-*Gambar 54. Skenario 5 — detail failure dari endpoint /api/admin/*.*
+*Gambar 60. Skenario 5 — detail failure dari endpoint /api/admin/*.*
 
 ### Resource Utilization
 
 ![VM 3 (tka-database) — MongoDB CPU 100% saat menerima load tinggi dari Locust](result/tka/htop_database.png)
-*Gambar 55. htop VM 3 (tka-database) — MongoDB menggunakan CPU 100% saat load tinggi, mengindikasikan database sebagai bottleneck utama.*
+*Gambar 61. htop VM 3 (tka-database) — MongoDB menggunakan CPU 100% saat load tinggi, mengindikasikan database sebagai bottleneck utama.*
 
 ![VM 2 (tka-backend-1) — Gunicorn 6 workers berjalan normal dengan CPU rendah](result/tka/htop_backend.png)
-*Gambar 56. htop VM 2 (tka-backend-1) — Gunicorn 6 workers berjalan dengan CPU rendah, menunjukkan kapasitas backend masih tersedia.*
+*Gambar 62. htop VM 2 (tka-backend-1) — Gunicorn 6 workers berjalan dengan CPU rendah, menunjukkan kapasitas backend masih tersedia.*
 
 ### Analisis Bottleneck
 
@@ -411,6 +431,6 @@ FP-TKA-KEL5/
 │   └── Test/      # Locustfile
 └── result/
     ├── locust test/   # Screenshot hasil load testing per skenario
-    ├── tka/           # Screenshot pengujian endpoint (Postman) dan htop
+    ├── tka/           # Screenshot pengujian endpoint (Postman), htop, dan tampilan frontend
     └── Arsitektur Cloud FP Kel 5.png
 ```
